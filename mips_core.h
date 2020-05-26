@@ -72,7 +72,14 @@ void execution_stage();
 // Store the data coming from the memory image file into the array 
 unsigned int flash_memory [1024];
 
-// variable to define opcode;
+  
+ struct global_variables
+  {
+    unsigned int get_instruction;
+    uint32_t temp_pc;
+    uint8_t opcode;
+  } ;
+  
 
 
 struct mips_register 

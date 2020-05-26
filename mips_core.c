@@ -8,10 +8,12 @@
 //
 //
 //////////////////////////////////////////////
-uint8_t opcode;
+
+
 struct mips_register registers;
 struct r_type r_type;
 struct i_type i_type;
+struct global_variables global_variables;
 
 
 
@@ -41,7 +43,7 @@ void read_memory_image ( char *filename)
         }
         fclose ( fptr );
     }
-    /* why didn't the file open? */
+    /* why didn't the file open */
     else
     {
         perror ( filename ); 
@@ -51,29 +53,26 @@ void read_memory_image ( char *filename)
 void update_simulator ()
 {
 
-    unsigned int get_instruction;
-    uint32_t temp_pc = 0;
-
     registers.program_counter = 0;
-    while(opcode != HALT)
+    while(global_variables.opcode != HALT)
     {
-        get_instruction = flash_memory[registers.program_counter];
-        instruction_decode(get_instruction);
+        global_variables.get_instruction = flash_memory[registers.program_counter];
+        instruction_decode(global_variables.get_instruction);
         execution_stage();
         ////printf("Result of get_instruction = %08X\n", get_instruction);
-        temp_pc = (temp_pc + 4);
-        registers.program_counter = ((temp_pc)/4);
+        global_variables.temp_pc = (global_variables.temp_pc + 4);
+        registers.program_counter = ((global_variables.temp_pc)/4);
     }
 
 }
 
 
-void execution_stage()
+void execution_stage ()
 {
     uint32_t memory_reference;
-    switch(opcode)
+    switch(global_variables.opcode)
     {
-        //<TODO> waiting for the reply from chisti 
+        
         case(LOAD):
         memory_reference = registers.register_array[r_type.rs] + i_type.immediate;
         memory_reference = (memory_reference / 4);
@@ -142,11 +141,8 @@ void execution_stage()
         case(XORI):
         registers.register_array[i_type.rt] =  registers.register_array[r_type.rs] ^ i_type.immediate;
         break;
-
-
-      
-      
-    }
+    
+     }
 }
 
 
@@ -154,11 +150,11 @@ void instruction_decode ( unsigned int add)
 {
 
     printf(" Hex: %08X\n", add);
-    opcode = ((add >> OPCODE) & OPCODE_MASK);  
+    global_variables.opcode = ((add >> OPCODE) & OPCODE_MASK);  
     ////printf(" opcode value in Hex: %X\n", opcode);
-    printf(" opcode value in decimal : %d\n",opcode);
+    printf(" opcode value in decimal : %d\n",global_variables.opcode);
 
-    if (opcode & 0x1)
+    if (global_variables.opcode & 0x1)
     {
         i_type.immediate = ((add  ) & IMMEDIATE_VALUE_MASK);
         printf("Immediate value: %d\n",i_type.immediate);
@@ -167,7 +163,7 @@ void instruction_decode ( unsigned int add)
         i_type.rt = ((add >> REGISTER_T) &  REGISTER_MASK);
         printf("RT value: %X\n",i_type.rt);
     }
-    else if (opcode == 12 || opcode == 13)
+    else if (global_variables.opcode == 12 || global_variables.opcode == 13)
     {
         i_type.immediate = ((add) & IMMEDIATE_VALUE_MASK);
         printf("Immediate value: %d\n",i_type.immediate);
