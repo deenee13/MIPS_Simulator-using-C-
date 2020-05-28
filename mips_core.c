@@ -28,6 +28,7 @@ void read_memory_image ( char *filename)
     if ( fptr != NULL )
     {
         /* or other suitable maximum line size */
+        //TODO: <why?>
         char read_data [ 11 ]; 
         /* read a line */
          while ( fgets ( read_data, sizeof read_data, fptr ) != NULL ) 
@@ -142,43 +143,44 @@ void execution_stage ()
         registers.register_array[i_type.rt] =  registers.register_array[r_type.rs] ^ i_type.immediate;
         break;
     
-     }
+   // <TODO: ADD Default>
+    }
 }
 
 
-void instruction_decode ( unsigned int add)
+void instruction_decode ( unsigned int address)
 {
 
-    printf(" Hex: %08X\n", add);
-    global_variables.opcode = ((add >> OPCODE) & OPCODE_MASK);  
+    printf(" Hex: %08X\n", address);
+    global_variables.opcode = ((address >> OPCODE) & OPCODE_MASK);  
     ////printf(" opcode value in Hex: %X\n", opcode);
     printf(" opcode value in decimal : %d\n",global_variables.opcode);
 
     if (global_variables.opcode & 0x1)
     {
-        i_type.immediate = ((add  ) & IMMEDIATE_VALUE_MASK);
+        i_type.immediate = ((address  ) & IMMEDIATE_VALUE_MASK);
         printf("Immediate value: %d\n",i_type.immediate);
-        i_type.rs = ((add >> REGISTER_S) &  REGISTER_MASK);
+        i_type.rs = ((address >> REGISTER_S) &  REGISTER_MASK);
         printf("RS value: %X\n",i_type.rs);
-        i_type.rt = ((add >> REGISTER_T) &  REGISTER_MASK);
+        i_type.rt = ((address >> REGISTER_T) &  REGISTER_MASK);
         printf("RT value: %X\n",i_type.rt);
     }
     else if (global_variables.opcode == 12 || global_variables.opcode == 13)
     {
-        i_type.immediate = ((add) & IMMEDIATE_VALUE_MASK);
+        i_type.immediate = ((address) & IMMEDIATE_VALUE_MASK);
         printf("Immediate value: %d\n",i_type.immediate);
-        i_type.rs = ((add >> REGISTER_S) &  REGISTER_MASK);
+        i_type.rs = ((address >> REGISTER_S) &  REGISTER_MASK);
         printf("RS value: %X\n",i_type.rs);
-        i_type.rt = ((add >> REGISTER_T) &  REGISTER_MASK);
+        i_type.rt = ((address >> REGISTER_T) &  REGISTER_MASK);
         printf("RT value: %X\n",i_type.rt);
     }
     else
     {
-        r_type.rs = ((add >> REGISTER_S) &  REGISTER_MASK);
+        r_type.rs = ((address >> REGISTER_S) &  REGISTER_MASK);
         printf("RS value: %X\n",r_type.rs);
-        r_type.rt = ((add >> REGISTER_T) &  REGISTER_MASK);
+        r_type.rt = ((address >> REGISTER_T) &  REGISTER_MASK);
         printf("RT value: %X\n",r_type.rt);
-        r_type.rd = ((add >> REGISTER_D) &  REGISTER_MASK);
+        r_type.rd = ((address >> REGISTER_D) &  REGISTER_MASK);
         printf("RD value: %X\n",r_type.rd);
     }
     

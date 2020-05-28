@@ -73,13 +73,14 @@ void execution_stage();
 unsigned int flash_memory [1024];
 
   
- struct global_variables
-  {
+  
+struct global_variables
+{
     unsigned int get_instruction;
     uint32_t temp_pc;
     uint8_t opcode;
-  } ;
-  
+} ;
+
 
 
 struct mips_register 
