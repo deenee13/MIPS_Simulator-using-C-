@@ -73,7 +73,7 @@ void read_memory_image ( char *filename);
 //////////////////////////////////////////////
 //
 //
-//          VARIABLES DEFINATION
+//   VARIABLES and STRUCT DEFINATION 
 //
 //
 ///////////////////////////////////////////////
@@ -83,6 +83,7 @@ void read_memory_image ( char *filename);
 unsigned int flash_memory [1024];
 
   
+
   
   struct r_type
 {
@@ -99,27 +100,6 @@ struct i_type
     int16_t immediate;
 };
 
-struct global_variables
-{
-    unsigned int get_instruction;
-    uint32_t temp_pc;
-    uint8_t opcode;
-} ;
-
-
-struct instruction_fetch
-{
-    uint32_t pc;
-    unsigned int get_instruction;
-} ;
-
-/*struct instruction_decode
-{
-    struct r_type register_type;
-    struct i_type immediate_type;
-    uint8_t opcode;
-};*/
-
 
 struct mips_core
 {
@@ -128,6 +108,8 @@ struct mips_core
     struct r_type register_type;
     struct i_type immediate_type;
     uint8_t opcode;
+    uint32_t memory_reference;
+    uint32_t alu_temp;
 };
 
 

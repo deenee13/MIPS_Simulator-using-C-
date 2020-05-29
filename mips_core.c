@@ -13,12 +13,6 @@
 struct mips_register registers;
 struct r_type r_type;
 struct i_type i_type;
-struct global_variables global_variables;
-
-
-struct instruction_fetch if_register;
-
-
 
 
 
@@ -142,84 +136,178 @@ void instruction_decode ( struct mips_core *mips_core_instance )
 }
 
 
-
 void execution_stage (struct mips_core *mips_core_instance)
 {
-    uint32_t memory_reference;
+    
     switch(mips_core_instance->opcode)
     {
         
         case(LOAD):
-        memory_reference = registers.register_array[mips_core_instance->register_type.rs] + mips_core_instance->immediate_type.immediate;
-        memory_reference = (memory_reference / 4);
-        registers.register_array[mips_core_instance->immediate_type.rt] = flash_memory[memory_reference];
+        mips_core_instance->memory_reference = registers.register_array[mips_core_instance->register_type.rs] + mips_core_instance->immediate_type.immediate;
+        mips_core_instance->memory_reference = (mips_core_instance->memory_reference / 4);
+        ////registers.register_array[mips_core_instance->immediate_type.rt] = flash_memory[memory_reference];
         break;
 
         case(STORE):
-        memory_reference = registers.register_array[mips_core_instance->register_type.rs] + mips_core_instance->immediate_type.immediate;
-        memory_reference = (memory_reference / 4);
-        flash_memory[memory_reference] = registers.register_array[mips_core_instance->immediate_type.rt];
+        mips_core_instance->memory_reference = registers.register_array[mips_core_instance->register_type.rs] + mips_core_instance->immediate_type.immediate;
+        mips_core_instance->memory_reference = (mips_core_instance->memory_reference / 4);
+       //// flash_memory[memory_reference] = registers.register_array[mips_core_instance->immediate_type.rt];
         break;
         //<TODO: Check the functionality of the load and store function>
 
         case(ADD):
-        registers.register_array[mips_core_instance->register_type.rd] =  registers.register_array[mips_core_instance->register_type.rs] + registers.register_array[mips_core_instance->register_type.rt];
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] + registers.register_array[mips_core_instance->register_type.rt];
+        printf("Value of Temporary register in addition: %d\n",mips_core_instance->alu_temp);
+        break;
+
+        case(ADDI):
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] + mips_core_instance->immediate_type.immediate;
+        printf("Value of Temporary register in addI: %d\n",mips_core_instance->alu_temp);
+        break;
+
+        case(SUB):
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] - registers.register_array[mips_core_instance->register_type.rt];
+        printf("Value of Temporary register in SUB: %d\n",mips_core_instance->alu_temp);
+        break;
+
+        case(SUBI):
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] - mips_core_instance->immediate_type.immediate;
+        printf("Value of Temporary register in SUBI: %d\n",mips_core_instance->alu_temp);
+        break;
+        
+        case(MUL):
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] * registers.register_array[mips_core_instance->register_type.rt];
+        printf("Value of Temporary register in Multiplication: %d\n",mips_core_instance->alu_temp);
+        break;
+
+        case(MULI):
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] * mips_core_instance->immediate_type.immediate;
+        break;
+
+        case(AND):
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] & registers.register_array[mips_core_instance->register_type.rt];
+        printf("Value of Temporary register in logical AND: %d\n",mips_core_instance->alu_temp);
+        break;
+
+        case(ANDI):
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] & mips_core_instance->immediate_type.immediate;
+        break;
+
+        case(OR):
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] | registers.register_array[mips_core_instance->register_type.rt];
+        printf("Value of Temporary register in logical OR: %d\n",mips_core_instance->alu_temp);
+        break;
+
+        case(ORI):
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] | mips_core_instance->immediate_type.immediate;
+        break;
+
+        case(XOR):
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] ^ registers.register_array[mips_core_instance->register_type.rt];
+        printf("Value of Temporary register in logical XOR: %d\n",mips_core_instance->alu_temp);
+        break;
+
+        case(XORI):
+        mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] ^ mips_core_instance->immediate_type.immediate;
+        break;
+    
+        // Simulator Should never reach the Default state
+        default:
+        printf("simulator has Reached Default Case\n");
+        break;
+
+    }
+}
+
+
+void mem_stage (struct mips_core *mips_core_instance)
+{
+    switch(mips_core_instance->opcode)
+    {
+        case(LOAD):
+        mips_core_instance->alu_temp = flash_memory[mips_core_instance->memory_reference];
+        break;
+
+        case(STORE):
+        flash_memory[mips_core_instance->memory_reference] = registers.register_array[mips_core_instance->immediate_type.rt];
+        break;
+
+        default:
+        printf(" It was not a Load or Store Instruction\n");
+        break;
+    }
+}
+
+
+void write_back_stage (struct mips_core *mips_core_instance)
+{
+    switch(mips_core_instance->opcode)
+    {
+        case(LOAD):
+        registers.register_array[mips_core_instance->immediate_type.rt] = mips_core_instance->alu_temp;
+        break;
+
+        case(ADD):
+        registers.register_array[mips_core_instance->register_type.rd] =  mips_core_instance->alu_temp;
         printf("Value of destination register in addition: %d\n",registers.register_array[mips_core_instance->register_type.rd]);
         break;
 
         case(ADDI):
-        registers.register_array[mips_core_instance->immediate_type.rt] =  registers.register_array[mips_core_instance->register_type.rs] + mips_core_instance->immediate_type.immediate;
+        registers.register_array[mips_core_instance->immediate_type.rt] = mips_core_instance->alu_temp;
         printf("Value of destination register in addI: %d\n",registers.register_array[mips_core_instance->immediate_type.rt]);
         break;
 
         case(SUB):
-        registers.register_array[mips_core_instance->register_type.rd] =  registers.register_array[mips_core_instance->register_type.rs] - registers.register_array[mips_core_instance->register_type.rt];
+        registers.register_array[mips_core_instance->register_type.rd] =  mips_core_instance->alu_temp;
         printf("Value of destination register in SUB: %d\n",registers.register_array[mips_core_instance->register_type.rd]);
         break;
 
         case(SUBI):
-        registers.register_array[mips_core_instance->immediate_type.rt] =  registers.register_array[mips_core_instance->register_type.rs] - mips_core_instance->immediate_type.immediate;
+        registers.register_array[mips_core_instance->immediate_type.rt] =  mips_core_instance->alu_temp;
         printf("Value of destination register in SUBI: %d\n",registers.register_array[mips_core_instance->register_type.rd]);
         break;
         
         case(MUL):
-        registers.register_array[mips_core_instance->register_type.rd] =  registers.register_array[mips_core_instance->register_type.rs] * registers.register_array[mips_core_instance->register_type.rt];
+        registers.register_array[mips_core_instance->register_type.rd] =  mips_core_instance->alu_temp;
         printf("Value of destination register in Multiplication: %d\n",registers.register_array[mips_core_instance->register_type.rd]);
         break;
 
         case(MULI):
-        registers.register_array[mips_core_instance->immediate_type.rt] =  registers.register_array[mips_core_instance->register_type.rs] * mips_core_instance->immediate_type.immediate;
+        registers.register_array[mips_core_instance->immediate_type.rt] = mips_core_instance->alu_temp;
         break;
 
         case(AND):
-        registers.register_array[mips_core_instance->register_type.rd] =  registers.register_array[mips_core_instance->register_type.rs] & registers.register_array[mips_core_instance->register_type.rt];
+        registers.register_array[mips_core_instance->register_type.rd] = mips_core_instance->alu_temp;
         printf("Value of destination register in logical AND: %d\n",registers.register_array[mips_core_instance->register_type.rd]);
         break;
 
         case(ANDI):
-        registers.register_array[mips_core_instance->immediate_type.rt] =  registers.register_array[mips_core_instance->register_type.rs] & mips_core_instance->immediate_type.immediate;
+        registers.register_array[mips_core_instance->immediate_type.rt] = mips_core_instance->alu_temp;
         break;
 
         case(OR):
-        registers.register_array[mips_core_instance->register_type.rd] =  registers.register_array[mips_core_instance->register_type.rs] | registers.register_array[mips_core_instance->register_type.rt];
+        registers.register_array[mips_core_instance->register_type.rd] =  mips_core_instance->alu_temp;
         printf("Value of destination register in logical OR: %d\n",registers.register_array[mips_core_instance->register_type.rd]);
         break;
 
         case(ORI):
-        registers.register_array[mips_core_instance->immediate_type.rt] =  registers.register_array[mips_core_instance->register_type.rs] | mips_core_instance->immediate_type.immediate;
+        registers.register_array[mips_core_instance->immediate_type.rt] = mips_core_instance->alu_temp;
         break;
 
         case(XOR):
-        registers.register_array[mips_core_instance->register_type.rd] =  registers.register_array[mips_core_instance->register_type.rs] ^ registers.register_array[mips_core_instance->register_type.rt];
+        registers.register_array[mips_core_instance->register_type.rd] =  mips_core_instance->alu_temp;
         printf("Value of destination register in logical XOR: %d\n",registers.register_array[mips_core_instance->register_type.rd]);
         break;
 
         case(XORI):
-        registers.register_array[mips_core_instance->immediate_type.rt] =  registers.register_array[mips_core_instance->register_type.rs] ^ mips_core_instance->immediate_type.immediate;
+        registers.register_array[mips_core_instance->immediate_type.rt] =  mips_core_instance->alu_temp;
         break;
     
-   // <TODO: ADD Default Condition>
+        
+        default:
+        printf("simulator has Reached Default Case in Write Back Stage\n");
+        break;
+
     }
 }
-
 

@@ -27,7 +27,10 @@
 void instruction_fetch (struct mips_core *mips_core_instance);
 void instruction_decode ( struct mips_core *mips_core_instance);
 void execution_stage (struct mips_core *mips_core_instance);
+void mem_stage (struct mips_core *mips_core_instance);
+void write_back_stage (struct mips_core *mips_core_instance);
 
+////void update_simulator (struct mips_core *mips_core_instance);
 
 int main (int argc, char*argv[])
 {
@@ -44,7 +47,11 @@ int main (int argc, char*argv[])
 
     execution_stage ( &mips_core_instance);
 
-    ////update_simulator ();
+    mem_stage ( &mips_core_instance);
+
+    write_back_stage (&mips_core_instance);
+
+    ////update_simulator ( &mips_core_instance);
  
 
     return 0;
