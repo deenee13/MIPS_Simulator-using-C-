@@ -19,10 +19,8 @@
 
 
 void read_memory_image ( char *filename);
-////void instruction_decode ( struct instruction_fetch if_register);
-////void update_simulator ();
-////void execution_stage();
-////void instruction_fetch (struct instruction_fetch if_register)
+
+
 
 ///////////////////////////////////////////
 //
@@ -110,12 +108,12 @@ struct mips_core
     uint8_t opcode;
     uint32_t memory_reference;
     uint32_t alu_temp;
+    uint32_t temp_pc;
 };
 
 
 struct mips_register 
 {
-    uint32_t program_counter;
     uint32_t register_array [31];
 };
 

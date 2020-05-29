@@ -11,8 +11,11 @@
 
 
 struct mips_register registers;
-struct r_type r_type;
-struct i_type i_type;
+void instruction_fetch (struct mips_core *mips_core_instance);
+void instruction_decode ( struct mips_core *mips_core_instance);
+void execution_stage (struct mips_core *mips_core_instance);
+void mem_stage (struct mips_core *mips_core_instance);
+void write_back_stage (struct mips_core *mips_core_instance);
 
 
 
@@ -52,37 +55,37 @@ void read_memory_image ( char *filename)
     }
 }
 
-#if 0
+////#if 0
 void update_simulator ()
 
 {
+    struct mips_core mips_core_instance;
 
-    registers.program_counter = 0;
-    while(global_variables.opcode != HALT)
+
+    mips_core_instance.pc = 0; // Initialising the Program Counter 
+    mips_core_instance.temp_pc = 0; 
+    while(mips_core_instance.opcode != HALT)
     {
-        /* Fetching the instruction from the Flash memory */
-        global_variables.get_instruction = flash_memory[registers.program_counter];
-        instruction_decode(global_variables.get_instruction);
-        execution_stage();
-        ////printf("Result of get_instruction = %08X\n", get_instruction);
-        global_variables.temp_pc = (global_variables.temp_pc + 4);
-        registers.program_counter = ((global_variables.temp_pc)/4);
-    }
+        instruction_fetch (&mips_core_instance);
+        instruction_decode (&mips_core_instance);
+        execution_stage ( &mips_core_instance);
+        mem_stage (&mips_core_instance);
+        write_back_stage (&mips_core_instance);
+   }
 
 }
-
-
-#endif
+////#endif
 
 // Updated with the Single Struct 
 void instruction_fetch (struct mips_core *mips_core_instance)
 {
     ////struct instruction_fetch if_register;
-    uint32_t temp_pc;
-    mips_core_instance->pc = 0;   // Initialising the Program Counter
+    
+   //// mips_core_instance->pc = 0;   // Initialising the Program Counter
     mips_core_instance->get_instruction = flash_memory[mips_core_instance->pc]; // Using the PC to fetch Instruction from local Flash memory 
-    temp_pc = temp_pc +4; // Incrementing the local PC by 4
-    mips_core_instance->pc = (temp_pc/4);  // Manipulating the local PC to get the Correct instrcution fetch from the local memory 
+    mips_core_instance->temp_pc = mips_core_instance->temp_pc +4; // Incrementing the local PC by 4
+    printf(" Value of the temp_pc: %d\n",mips_core_instance->temp_pc);
+    mips_core_instance->pc = (mips_core_instance->temp_pc/4);  // Manipulating the local PC to get the Correct instrcution fetch from the local memory 
 
     printf("Result of get_instruction = %08X\n", mips_core_instance->get_instruction);
 }   
@@ -105,7 +108,7 @@ void instruction_decode ( struct mips_core *mips_core_instance )
         mips_core_instance->immediate_type.immediate = ((mips_core_instance->get_instruction  ) & IMMEDIATE_VALUE_MASK);
         printf("Immediate value: %d\n",mips_core_instance->immediate_type.immediate);
         mips_core_instance->immediate_type.rs = ((mips_core_instance->get_instruction >> REGISTER_S) &  REGISTER_MASK);
-        printf("RS value: %X\n",i_type.rs);
+        printf("RS value: %X\n",mips_core_instance->immediate_type.rs);
         mips_core_instance->immediate_type.rt = ((mips_core_instance->get_instruction >> REGISTER_T) &  REGISTER_MASK);
         printf("RT value: %X\n",mips_core_instance->immediate_type.rt);
     }
