@@ -20,8 +20,8 @@
 
 void read_memory_image ( char *filename);
 ////void instruction_decode ( struct instruction_fetch if_register);
-void update_simulator ();
-void execution_stage();
+////void update_simulator ();
+////void execution_stage();
 ////void instruction_fetch (struct instruction_fetch if_register)
 
 ///////////////////////////////////////////
@@ -113,13 +113,22 @@ struct instruction_fetch
     unsigned int get_instruction;
 } ;
 
-struct instruction_decode
+/*struct instruction_decode
 {
     struct r_type register_type;
     struct i_type immediate_type;
     uint8_t opcode;
-};
+};*/
 
+
+struct mips_core
+{
+    uint32_t pc;
+    unsigned int get_instruction;
+    struct r_type register_type;
+    struct i_type immediate_type;
+    uint8_t opcode;
+};
 
 
 struct mips_register 

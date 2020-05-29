@@ -24,22 +24,25 @@
 //
 ///////////////////////////////////////////////////
 
-void instruction_fetch (struct instruction_fetch if_register);
-void instruction_decode ( struct instruction_fetch if_register);
+void instruction_fetch (struct mips_core *mips_core_instance);
+void instruction_decode ( struct mips_core *mips_core_instance);
+void execution_stage (struct mips_core *mips_core_instance);
 
 
 int main (int argc, char*argv[])
 {
-    struct instruction_fetch if_register;
+    struct mips_core mips_core_instance;
     char *filename = argv[1];
     /* This function reads the text file and store everything in to the flash memory*/
     read_memory_image(filename);
 
-    /*This fucntion Initialises the PC and reads the Instruction using the value of PC from memory*/
-    instruction_fetch (if_register);
+    
+    instruction_fetch (&mips_core_instance);
 
-    /* This function decodes the instruction by taking the Struct of IF as argument*/
-    instruction_decode ( if_register);
+    
+    instruction_decode (&mips_core_instance);
+
+    execution_stage ( &mips_core_instance);
 
     ////update_simulator ();
  
