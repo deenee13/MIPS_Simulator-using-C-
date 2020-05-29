@@ -15,20 +15,6 @@
 
 
 
-       
-
-//////////////////////////////////////////////
-//
-//
-//          FUNCTION PROTOTYPE
-//
-//
-///////////////////////////////////////////////
-
-void instruction_decode (unsigned int add);
-
-
-
 /////////////////////////////////////////////////
 //
 //
@@ -38,15 +24,24 @@ void instruction_decode (unsigned int add);
 //
 ///////////////////////////////////////////////////
 
+void instruction_fetch (struct instruction_fetch if_register);
+void instruction_decode ( struct instruction_fetch if_register);
 
 
 int main (int argc, char*argv[])
 {
-    
+    struct instruction_fetch if_register;
     char *filename = argv[1];
+    /* This function reads the text file and store everything in to the flash memory*/
     read_memory_image(filename);
 
-    update_simulator ();
+    /*This fucntion Initialises the PC and reads the Instruction using the value of PC from memory*/
+    instruction_fetch (if_register);
+
+    /* This function decodes the instruction by taking the Struct of IF as argument*/
+    instruction_decode ( if_register);
+
+    ////update_simulator ();
  
 
     return 0;

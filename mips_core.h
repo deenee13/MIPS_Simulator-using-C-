@@ -6,13 +6,23 @@
 #include <string.h>
 #include <ctype.h>
 
+
+
+
+//////////////////////////////////////////////
+//
+//
+//          FUNCTION PROTOTYPE
+//
+//
+///////////////////////////////////////////////
+
+
 void read_memory_image ( char *filename);
-
-void instruction_decode ( unsigned int add);
-
+////void instruction_decode ( struct instruction_fetch if_register);
 void update_simulator ();
-
 void execution_stage();
+////void instruction_fetch (struct instruction_fetch if_register)
 
 ///////////////////////////////////////////
 //
@@ -74,6 +84,21 @@ unsigned int flash_memory [1024];
 
   
   
+  struct r_type
+{
+    uint8_t rs;
+    uint8_t rt;
+    uint8_t rd;
+};
+
+
+struct i_type
+{
+    uint8_t rs;
+    uint8_t rt;
+    int16_t immediate;
+};
+
 struct global_variables
 {
     unsigned int get_instruction;
@@ -82,26 +107,26 @@ struct global_variables
 } ;
 
 
+struct instruction_fetch
+{
+    uint32_t pc;
+    unsigned int get_instruction;
+} ;
+
+struct instruction_decode
+{
+    struct r_type register_type;
+    struct i_type immediate_type;
+    uint8_t opcode;
+};
+
+
 
 struct mips_register 
 {
     uint32_t program_counter;
     uint32_t register_array [31];
-} ;
+};
 
-struct r_type
-{
-    uint8_t rs;
-    uint8_t rt;
-    uint8_t rd;
-} ;
-
-
-struct i_type
-{
-    uint8_t rs;
-    uint8_t rt;
-    int16_t immediate;
-} ;
 
 #endif

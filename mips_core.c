@@ -16,6 +16,13 @@ struct i_type i_type;
 struct global_variables global_variables;
 
 
+struct instruction_fetch if_register;
+
+
+
+
+
+
 
 
 void read_memory_image ( char *filename)
@@ -51,12 +58,14 @@ void read_memory_image ( char *filename)
     }
 }
 
+#if 0
 void update_simulator ()
 {
 
     registers.program_counter = 0;
     while(global_variables.opcode != HALT)
     {
+        /* Fetching the instruction from the Flash memory */
         global_variables.get_instruction = flash_memory[registers.program_counter];
         instruction_decode(global_variables.get_instruction);
         execution_stage();
@@ -66,6 +75,70 @@ void update_simulator ()
     }
 
 }
+#endif
+
+
+void instruction_fetch (struct instruction_fetch if_register)
+{
+    ////struct instruction_fetch if_register;
+    uint32_t temp_pc;
+    if_register.pc = 0;   // Initialising the Program Counter
+    if_register.get_instruction = flash_memory[if_register.pc]; // Using the PC to fetch Instruction from local Flash memory 
+    temp_pc = temp_pc +4; // Incrementing the local PC by 4
+    if_register.pc = (temp_pc/4);  // Manipulating the local PC to get the Correct instrcution fetch from the local memory 
+
+    printf("Result of get_instruction = %08X\n", if_register.get_instruction);
+}   
+
+
+
+
+
+void instruction_decode ( struct instruction_fetch if_register )
+{
+    struct instruction_decode id_register; 
+
+    printf(" Hex: %08X\n", if_register.get_instruction);
+    id_register.opcode = ((if_register.get_instruction >> OPCODE) & OPCODE_MASK);  
+    ////printf(" opcode value in Hex: %X\n", opcode);
+    printf(" opcode value in decimal : %d\n",id_register.opcode);
+
+    // IF for the Immediate Type
+    if (id_register.opcode & 0x1)
+    {
+        id_register.immediate_type.immediate = ((if_register.get_instruction  ) & IMMEDIATE_VALUE_MASK);
+        printf("Immediate value: %d\n",id_register.immediate_type.immediate);
+        id_register.immediate_type.rs = ((if_register.get_instruction >> REGISTER_S) &  REGISTER_MASK);
+        printf("RS value: %X\n",i_type.rs);
+        id_register.immediate_type.rt = ((if_register.get_instruction >> REGISTER_T) &  REGISTER_MASK);
+        printf("RT value: %X\n",id_register.immediate_type.rt);
+    }
+
+    // Else if block for the LOAD and STORE TYPE
+    else if (id_register.opcode == 12 || id_register.opcode == 13)
+    {
+        id_register.immediate_type.immediate = ((if_register.get_instruction) & IMMEDIATE_VALUE_MASK);
+        printf("Immediate value: %d\n",id_register.immediate_type.immediate);
+        id_register.immediate_type.rs = ((if_register.get_instruction >> REGISTER_S) &  REGISTER_MASK);
+        printf("RS value: %X\n",id_register.immediate_type.rs);
+        id_register.immediate_type.rt = ((if_register.get_instruction >> REGISTER_T) &  REGISTER_MASK);
+        printf("RT value: %X\n",id_register.immediate_type.rt);
+    }
+
+    // Else block for the Register Type
+    else
+    {
+        id_register.register_type.rs = ((if_register.get_instruction >> REGISTER_S) &  REGISTER_MASK);
+        printf("RS value: %X\n",id_register.register_type.rs);
+        id_register.register_type.rt = ((if_register.get_instruction >> REGISTER_T) &  REGISTER_MASK);
+        printf("RT value: %X\n",id_register.register_type.rt);
+        id_register.register_type.rd = ((if_register.get_instruction >> REGISTER_D) &  REGISTER_MASK);
+        printf("RD value: %X\n",id_register.register_type.rd);
+    }
+    
+    
+}
+
 
 
 void execution_stage ()
@@ -148,41 +221,3 @@ void execution_stage ()
 }
 
 
-void instruction_decode ( unsigned int address)
-{
-
-    printf(" Hex: %08X\n", address);
-    global_variables.opcode = ((address >> OPCODE) & OPCODE_MASK);  
-    ////printf(" opcode value in Hex: %X\n", opcode);
-    printf(" opcode value in decimal : %d\n",global_variables.opcode);
-
-    if (global_variables.opcode & 0x1)
-    {
-        i_type.immediate = ((address  ) & IMMEDIATE_VALUE_MASK);
-        printf("Immediate value: %d\n",i_type.immediate);
-        i_type.rs = ((address >> REGISTER_S) &  REGISTER_MASK);
-        printf("RS value: %X\n",i_type.rs);
-        i_type.rt = ((address >> REGISTER_T) &  REGISTER_MASK);
-        printf("RT value: %X\n",i_type.rt);
-    }
-    else if (global_variables.opcode == 12 || global_variables.opcode == 13)
-    {
-        i_type.immediate = ((address) & IMMEDIATE_VALUE_MASK);
-        printf("Immediate value: %d\n",i_type.immediate);
-        i_type.rs = ((address >> REGISTER_S) &  REGISTER_MASK);
-        printf("RS value: %X\n",i_type.rs);
-        i_type.rt = ((address >> REGISTER_T) &  REGISTER_MASK);
-        printf("RT value: %X\n",i_type.rt);
-    }
-    else
-    {
-        r_type.rs = ((address >> REGISTER_S) &  REGISTER_MASK);
-        printf("RS value: %X\n",r_type.rs);
-        r_type.rt = ((address >> REGISTER_T) &  REGISTER_MASK);
-        printf("RT value: %X\n",r_type.rt);
-        r_type.rd = ((address >> REGISTER_D) &  REGISTER_MASK);
-        printf("RD value: %X\n",r_type.rd);
-    }
-    
-    
-}
