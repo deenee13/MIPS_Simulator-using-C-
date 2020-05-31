@@ -19,7 +19,7 @@
 
 
 void read_memory_image ( char *filename);
-
+void update_simulator ();
 
 
 ///////////////////////////////////////////
@@ -67,6 +67,11 @@ void read_memory_image ( char *filename);
 // Halt Operation
 #define HALT                          17
 
+// Branch operation
+#define BEQ                           15
+#define BZ                            14
+#define JR                            16
+
 
 //////////////////////////////////////////////
 //
@@ -78,7 +83,7 @@ void read_memory_image ( char *filename);
 
 
 // Store the data coming from the memory image file into the array 
-unsigned int flash_memory [1024];
+ int flash_memory [1024];
 
   
 
@@ -109,12 +114,14 @@ struct mips_core
     uint32_t memory_reference;
     uint32_t alu_temp;
     uint32_t temp_pc;
+    bool zero_flag;
 };
 
 
 struct mips_register 
 {
-    uint32_t register_array [31];
+    uint32_t register_array [31];  
+    ////int32_t register_array [31];
 };
 
 
