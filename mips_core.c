@@ -35,17 +35,19 @@ void read_memory_image ( char *filename)
         //TODO: <why?>
         char read_data [ 11 ]; 
         /* read a line */
+        printf(" Writing Instruction into the flash_memory .........................................\n");
          while ( fgets ( read_data, sizeof read_data, fptr ) != NULL ) 
         {
            
             address = strtol(read_data, NULL, 16);
            
-            printf("%08x\n",address);
+            ////printf("%08x\n",address);
             flash_memory[i] = address;
-            printf("Data in flash memory: %08x\n", flash_memory[i]);
+           //// printf("Data in flash memory: %08x\n", flash_memory[i]);
             i++;
            
         }
+        printf("-----------------------Instructions Successfully written into flash_memory------------------\n");
         fclose ( fptr );
     }
     /* why didn't the file open */
@@ -68,10 +70,12 @@ void update_simulator ()
         registers.register_array[i] = 0;
     }
     mips_core_instance.pc = 0; // Initialising the Program Counter 
-    mips_core_instance.temp_pc = 0; 
+    mips_core_instance.temp_pc = false; 
+    mips_core_instance.zero_flag = false;   
+  
     while(mips_core_instance.opcode != HALT)
     {
-        mips_core_instance.zero_flag = false;   
+        ////mips_core_instance.zero_flag = 0;  
         instruction_fetch (&mips_core_instance);
         instruction_decode (&mips_core_instance);
         execution_stage ( &mips_core_instance);
@@ -82,21 +86,42 @@ void update_simulator ()
 }
 ////#endif
 
-
+// Updated with the Single Struct 
 void instruction_fetch (struct mips_core *mips_core_instance)
 {
     if (mips_core_instance->zero_flag == true)
     {
-        mips_core_instance->temp_pc = mips_core_instance->immediate_type.immediate;   
-        printf(" Value of the temp_pc: %d\n",mips_core_instance->temp_pc);
-        mips_core_instance->pc = (mips_core_instance->temp_pc) + (mips_core_instance->pc);
-        printf(" Value of the pc: %d\n",mips_core_instance->pc);      
+        /*If Branch is taken then the immediate value + (PC + 4) -> PC */
+        mips_core_instance->pc = mips_core_instance->immediate_type.immediate + mips_core_instance->pc;   
+        printf(" Value of the pc: %d\n",mips_core_instance->pc);   
         mips_core_instance->get_instruction = flash_memory[mips_core_instance->pc];  
         printf("Result of get_instruction = %08X\n", mips_core_instance->get_instruction);
+        mips_core_instance->temp_pc =   mips_core_instance->pc * 4;  
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        printf(" Value of the temp_pc: %d\n",mips_core_instance->temp_pc); 
+        mips_core_instance->pc = mips_core_instance->temp_pc/4;
+        printf("updated value of the pc: %d\n", mips_core_instance->pc);  
+        mips_core_instance->zero_flag = false;
+    }
+
+    else if (mips_core_instance->jump_flag == true)
+    {
+        mips_core_instance->temp_pc = registers.register_array[mips_core_instance->immediate_type.rs];
+       //// mips_core_instance->temp_pc = mips_core_instance->temp_pc*4;
+       //// mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+       
+        printf("Value of the temp_pc during the Unconditional jump = %d\n",mips_core_instance->temp_pc); 
+        mips_core_instance->pc = (mips_core_instance->temp_pc / 4);
+        printf(" Value of the pc: %d\n",mips_core_instance->pc);  
+        mips_core_instance->get_instruction = flash_memory[mips_core_instance->pc];  
+        printf("Result of get_instruction = %08X\n", mips_core_instance->get_instruction);
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->pc = mips_core_instance->temp_pc/4;
+        mips_core_instance->jump_flag = 0;
     }
     else
     {
-        
+    
         mips_core_instance->get_instruction = flash_memory[mips_core_instance->pc];     // Using the PC to fetch Instruction from local Flash memory 
         mips_core_instance->temp_pc = mips_core_instance->temp_pc +4;                   // Incrementing the local PC by 4
         printf(" Value of the temp_pc: %d\n",mips_core_instance->temp_pc);
@@ -108,7 +133,7 @@ void instruction_fetch (struct mips_core *mips_core_instance)
 
 
 
-// Updated with the Single Struct 
+
 void instruction_decode ( struct mips_core *mips_core_instance )
 {
 
@@ -139,6 +164,16 @@ void instruction_decode ( struct mips_core *mips_core_instance )
         printf("RT value: %X\n",mips_core_instance->immediate_type.rt);
     }
 
+    // Else if block for the control flow instruction BEQ is taken care in the Immediate type as its opcode is 15(01111)
+    else if (mips_core_instance->opcode == 14 || mips_core_instance->opcode == 16)
+    {
+        mips_core_instance->immediate_type.immediate = ((mips_core_instance->get_instruction) & IMMEDIATE_VALUE_MASK);
+        printf("Immediate value: %d\n",mips_core_instance->immediate_type.immediate);
+        mips_core_instance->immediate_type.rs = ((mips_core_instance->get_instruction >> REGISTER_S) &  REGISTER_MASK);
+        printf("RS value: %X\n",mips_core_instance->immediate_type.rs);
+        mips_core_instance->immediate_type.rt = ((mips_core_instance->get_instruction >> REGISTER_T) &  REGISTER_MASK);
+        printf("RT value: %X\n",mips_core_instance->immediate_type.rt);
+    }
 
     // Else block for the Register Type
     else
@@ -157,10 +192,10 @@ void instruction_decode ( struct mips_core *mips_core_instance )
 
 void execution_stage (struct mips_core *mips_core_instance)
 {
-    mips_core_instance->zero_flag = true;
+    
     switch(mips_core_instance->opcode)
     {
-        mips_core_instance-> zero_flag = false;
+        
         case(LOAD):
         mips_core_instance->memory_reference = registers.register_array[mips_core_instance->immediate_type.rs] + mips_core_instance->immediate_type.immediate;
         printf("Value of the register rs in register type:%d\n",registers.register_array[mips_core_instance->register_type.rs]);
@@ -171,16 +206,14 @@ void execution_stage (struct mips_core *mips_core_instance)
         mips_core_instance->memory_reference = (mips_core_instance->memory_reference / 4);
         printf("Final value of the memory_reference variable after dividing it by 4: %d\n",mips_core_instance->memory_reference);
         ////registers.register_array[mips_core_instance->immediate_type.rt] = flash_memory[memory_reference];
-        
         break;
 
         case(STORE):
         mips_core_instance->memory_reference = registers.register_array[mips_core_instance->immediate_type.rs] + mips_core_instance->immediate_type.immediate;
         mips_core_instance->memory_reference = (mips_core_instance->memory_reference / 4);
-       //// flash_memory[memory_reference] = registers.register_array[mips_core_instance->immediate_type.rt];
+        //// flash_memory[memory_reference] = registers.register_array[mips_core_instance->immediate_type.rt];
         break;
-        //<TODO: Check the functionality of the load and store function>
-
+        
         case(ADD):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] + registers.register_array[mips_core_instance->register_type.rt];
         printf("Value of Temporary register in addition: %d\n",mips_core_instance->alu_temp);
@@ -241,19 +274,37 @@ void execution_stage (struct mips_core *mips_core_instance)
         printf("Value of Temporary register in logical XORI: %d\n",mips_core_instance->alu_temp);
         break;
 
+        //<TODO: Check the functinality of it>
         case(BEQ):
         ////printf("Contents of the alu_temp: %d",mips_core_instance->alu_temp);
         if( (registers.register_array[mips_core_instance->immediate_type.rt]) == (registers.register_array[mips_core_instance->immediate_type.rs]) )  
         {
             mips_core_instance->zero_flag = true;
-            printf("Branch is taken\n");
+            printf("Conditional BEQ Branch is taken\n");
         }
         else
         {
-            break;
+            printf("Branch BEQ is not taken\n");
         }
         break;
-    
+
+        case(BZ):
+        if((registers.register_array[mips_core_instance->immediate_type.rs]) == 0)
+        {
+            mips_core_instance->zero_flag = true;
+            printf("Conditional BZ  Branch is taken\n");
+        }
+        else
+        {
+            printf("Branch BZ is not taken\n");
+        }
+        break;
+
+        case(JR):
+        mips_core_instance->jump_flag = true;
+        printf(" Unconditional Branch is taken\n");
+        break;
+        
         // Simulator Should never reach the Default state
         default:
         printf("simulator has Reached Default Case in Execute Stage\n");
@@ -268,7 +319,10 @@ void mem_stage (struct mips_core *mips_core_instance)
     switch(mips_core_instance->opcode)
     {
         case(LOAD):
+        printf("-------------------MEM STAGE-------------------\n");
+        printf("Value of the memory reference: %d\n",mips_core_instance->memory_reference);
         mips_core_instance->alu_temp = flash_memory[mips_core_instance->memory_reference];
+        printf("Value in the alu_temp %d\n",mips_core_instance->alu_temp);
         break;
 
         case(STORE):

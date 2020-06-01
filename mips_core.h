@@ -115,6 +115,7 @@ struct mips_core
     uint32_t alu_temp;
     uint32_t temp_pc;
     bool zero_flag;
+    bool jump_flag;
 };
 
 
