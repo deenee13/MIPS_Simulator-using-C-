@@ -82,7 +82,7 @@ void update_simulator ()
 }
 ////#endif
 
-// Updated with the Single Struct 
+
 void instruction_fetch (struct mips_core *mips_core_instance)
 {
     if (mips_core_instance->zero_flag == true)
