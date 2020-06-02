@@ -107,6 +107,7 @@ struct i_type
 struct mips_core
 {
     uint32_t pc;
+    uint32_t branch_pc;
     unsigned int get_instruction;
     struct r_type register_type;
     struct i_type immediate_type;
@@ -116,6 +117,11 @@ struct mips_core
     uint32_t temp_pc;
     bool zero_flag;
     bool jump_flag;
+    uint16_t arithmetic_count;
+    uint16_t logical_count;
+    uint16_t total_count;
+    uint16_t control_flow_count;
+    uint16_t memory_access_count;
 };
 
 
@@ -123,6 +129,11 @@ struct mips_register
 {
     uint32_t register_array [31];  
     ////int32_t register_array [31];
+};
+
+struct inst_count
+{
+    uint8_t total_inst;
 };
 
 

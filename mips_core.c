@@ -77,6 +77,11 @@ void update_simulator ()
     mips_core_instance.temp_pc = 0; 
     mips_core_instance.zero_flag = false;
     mips_core_instance.jump_flag = false;   
+    mips_core_instance.arithmetic_count = 0;
+    mips_core_instance.logical_count = 0;
+    mips_core_instance.total_count = 0;
+    mips_core_instance.control_flow_count = 0;
+    mips_core_instance.memory_access_count = 0;
     while(mips_core_instance.opcode != HALT)
     {
          
@@ -85,8 +90,7 @@ void update_simulator ()
         execution_stage ( &mips_core_instance);
         mem_stage (&mips_core_instance);
         write_back_stage (&mips_core_instance);
-   }
-
+    }
 }
 ////#endif
 
@@ -97,18 +101,25 @@ void instruction_fetch (struct mips_core *mips_core_instance)
     if (mips_core_instance->zero_flag == true)
     {
 
-       update_pc_conditional_branch (mips_core_instance);
+      //// update_pc_conditional_branch (mips_core_instance);
+       mips_core_instance->get_instruction = flash_memory[mips_core_instance->pc]; 
+       
+
 
     }
 
     else if (mips_core_instance->jump_flag == true)
     {
 
-        update_pc_unconditional_branch (mips_core_instance);
+      ////  update_pc_unconditional_branch (mips_core_instance);
+        mips_core_instance->get_instruction = flash_memory[mips_core_instance->pc];  
+        
     }
     else
     {
-        update_pc_normal (mips_core_instance);
+       //// update_pc_normal (mips_core_instance);
+        mips_core_instance->get_instruction = flash_memory[mips_core_instance->pc];  
+        
 
     }
 } 
@@ -117,6 +128,7 @@ void instruction_fetch (struct mips_core *mips_core_instance)
 void update_pc_conditional_branch (struct mips_core *mips_core_instance)
 {
     // Update the PC with the immediate value to jump to the Xth instruction
+    mips_core_instance->pc = (mips_core_instance->pc - 1);
     mips_core_instance->pc = mips_core_instance->immediate_type.immediate + mips_core_instance->pc;   
     printf(" Updated Value of the pc: %d\n",mips_core_instance->pc);   
     // Fetch the Instruction from the updated pc value
@@ -171,7 +183,7 @@ void update_pc_normal (struct mips_core *mips_core_instance)
     printf(" Incremented Value of the temp_pc: %d\n",mips_core_instance->temp_pc);
     // Manipulating the value of the temp_PC to get the actual Instruction from the flash_memory
     mips_core_instance->pc = (mips_core_instance->temp_pc/4); 
-    printf("Incremented value of the PC: %d\n",mips_core_instance->temp_pc);                    
+    printf("Incremented value of the PC: %d\n",mips_core_instance->pc);                    
         
 }
 
@@ -249,71 +261,127 @@ void execution_stage (struct mips_core *mips_core_instance)
         printf("Final value of the memory_reference variable: %d\n",mips_core_instance->memory_reference);
         mips_core_instance->memory_reference = (mips_core_instance->memory_reference / 4);
         printf("Final value of the memory_reference variable after dividing it by 4: %d\n",mips_core_instance->memory_reference);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->total_count++;
+        mips_core_instance->memory_access_count++;
         break;
 
         case(STORE):
         mips_core_instance->memory_reference = registers.register_array[mips_core_instance->immediate_type.rs] + mips_core_instance->immediate_type.immediate;
         mips_core_instance->memory_reference = (mips_core_instance->memory_reference / 4);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->total_count++;
+        mips_core_instance->memory_access_count++;
         break;
         
         case(ADD):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] + registers.register_array[mips_core_instance->register_type.rt];
         printf("Value of Temporary register in addition: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->arithmetic_count++;
+        mips_core_instance->total_count++;
         break;
 
         case(ADDI):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->immediate_type.rs] + mips_core_instance->immediate_type.immediate;
         printf("Value of Temporary register in addI: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->arithmetic_count++;
+        mips_core_instance->total_count++;
         break;
 
         case(SUB):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] - registers.register_array[mips_core_instance->register_type.rt];
         printf("Value of Temporary register in SUB: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->arithmetic_count++;
+        mips_core_instance->total_count++;
         break;
 
         case(SUBI):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->immediate_type.rs] - mips_core_instance->immediate_type.immediate;
         printf("Value of Temporary register in SUBI: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->arithmetic_count++;
+        mips_core_instance->total_count++;
         break;
         
         case(MUL):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] * registers.register_array[mips_core_instance->register_type.rt];
         printf("Value of Temporary register in Multiplication: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->arithmetic_count++;
+        mips_core_instance->total_count++;
         break;
 
         case(MULI):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->immediate_type.rs] * mips_core_instance->immediate_type.immediate;
         printf("Value of Temporary register in MULI: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->arithmetic_count++;
+        mips_core_instance->total_count++;
         break;
 
         case(AND):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] & registers.register_array[mips_core_instance->register_type.rt];
         printf("Value of Temporary register in logical AND: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->logical_count++;
+        mips_core_instance->total_count++;
         break;
 
         case(ANDI):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->immediate_type.rs] & mips_core_instance->immediate_type.immediate;
         printf("Value of Temporary register in logical ANDI: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->logical_count++;
+        mips_core_instance->total_count++;
         break;
 
         case(OR):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] | registers.register_array[mips_core_instance->register_type.rt];
         printf("Value of Temporary register in logical OR: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->logical_count++;
+        mips_core_instance->total_count++;
         break;
 
         case(ORI):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->immediate_type.rs] | mips_core_instance->immediate_type.immediate;
         printf("Value of Temporary register in logical ORI: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->logical_count++;
+        mips_core_instance->total_count++;
         break;
 
         case(XOR):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->register_type.rs] ^ registers.register_array[mips_core_instance->register_type.rt];
         printf("Value of Temporary register in logical XOR: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->logical_count++;
+        mips_core_instance->total_count++;
         break;
 
         case(XORI):
         mips_core_instance->alu_temp =  registers.register_array[mips_core_instance->immediate_type.rs] ^ mips_core_instance->immediate_type.immediate;
         printf("Value of Temporary register in logical XORI: %d\n",mips_core_instance->alu_temp);
+        mips_core_instance->pc = mips_core_instance->pc + 1;
+        mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+        mips_core_instance->logical_count++;
+        mips_core_instance->total_count++;
         break;
 
         case(BEQ):
@@ -321,10 +389,18 @@ void execution_stage (struct mips_core *mips_core_instance)
         {
             mips_core_instance->zero_flag = true;
             printf("Conditional BEQ Branch is taken\n");
+            mips_core_instance->pc = (mips_core_instance->immediate_type.immediate + mips_core_instance->pc);
+            mips_core_instance->temp_pc = (mips_core_instance->pc * 4);
+            mips_core_instance->control_flow_count++;
+            mips_core_instance->total_count++;
         }
         else
         {
             printf("Branch BEQ is not taken\n");
+            mips_core_instance->pc = mips_core_instance->pc + 1;
+            mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+            mips_core_instance->control_flow_count++;
+            mips_core_instance->total_count++;
         }
         break;
 
@@ -333,16 +409,28 @@ void execution_stage (struct mips_core *mips_core_instance)
         {
             mips_core_instance->zero_flag = true;
             printf("Conditional BZ  Branch is taken\n");
+            mips_core_instance->pc = (mips_core_instance->immediate_type.immediate + mips_core_instance->pc);
+            mips_core_instance->temp_pc = (mips_core_instance->pc * 4);
+            mips_core_instance->control_flow_count++;
+            mips_core_instance->total_count++;
         }
         else
         {
             printf("Branch BZ is not taken\n");
+            mips_core_instance->pc = mips_core_instance->pc + 1;
+            mips_core_instance->temp_pc = mips_core_instance->temp_pc + 4;
+            mips_core_instance->control_flow_count++;
+            mips_core_instance->total_count++;
         }
         break;
 
         case(JR):
-        mips_core_instance->jump_flag = true;
-        printf(" Unconditional Branch is taken\n");
+            mips_core_instance->jump_flag = true;
+            printf(" Unconditional Branch is taken\n");
+            mips_core_instance->temp_pc  = registers.register_array[mips_core_instance->immediate_type.rs];
+            mips_core_instance->pc = (mips_core_instance->temp_pc / 4);
+            mips_core_instance->control_flow_count++;
+            mips_core_instance->total_count++;
         break;
         
         // Simulator Should never reach the Default state
@@ -465,6 +553,19 @@ void write_back_stage (struct mips_core *mips_core_instance)
         default:
         printf("simulator has Reached Default Case in Write Back Stage\n");
         printf("\n");
+        printf("logical inst: %d\n",mips_core_instance->logical_count);
+        printf("Arithmetic inst: %d\n",mips_core_instance->arithmetic_count);
+        printf("Total inst: %d\n",mips_core_instance->total_count);
+        printf("Control inst: %d\n",mips_core_instance->control_flow_count);
+        printf("Memory access inst: %d\n",mips_core_instance->memory_access_count);
+     /*   for(int j = 0; j<=31; j++ )
+        {
+           printf("Register [%d]: %d\n",j ,registers.register_array[j]);
+        }
+        printf("content of flash memory: %d\n",flash_memory[1400/4]);
+        printf("content of flash memory: %d\n",flash_memory[1404/4]);
+        printf("content of flash memory: %d\n",flash_memory[1408/4]);*/
+
         break;
 
     }
